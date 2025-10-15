@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存分配系统 (已修复)</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        #allocateBtn {
+            background-color: #4CAF50;
+        }
+        #allocateBtn:hover {
+            background-color: #45a049;
+        }
+        #exportBtn {
+            background-color: #007bff;
+        }
+        #exportBtn:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed; /* 固定表格布局 */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary {
+            background-color: #e9f7ef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4CAF50;
+        }
+        .tabs {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            margin-bottom: 0px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+            border-right: 1px solid #ccc;
+        }
+        .tab:hover {
+            background-color: #ddd;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid #4CAF50;
+            cursor: default;
+        }
+        .tabcontent {
+            display: none;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .active-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>库存分配系统 (已修复)</h1>
+        
+        <div class="controls">
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+            <button id="allocateBtn" disabled>执行分配</button>
+            <button id="exportBtn" disabled>导出Excel</button>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">请上传包含 "库存数据" 和 "客户数据" 的 Excel 文件（推荐xlsx格式）</p>
+        </div>
+        
+        <div class="summary" id="summary">
+            <p><strong>系统状态：</strong>等待上传文件并执行分配...</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'allocation')">分配结果 (表3)</button>
+            <button class="tab" onclick="openTab(event, 'inventory')">原始库存数据 (表1)</button>
+            <button class="tab" onclick="openTab(event, 'clients')">原始客户数据 (表2)</button>
+        </div>
+        
+        <div id="allocation" class="tabcontent active-content">
+            <table id="allocationTable">
+                <thead>
+                    <tr>
+                        <th>商业公司</th>
+                        <th>客户名称</th>
+                        <th>产品名称</th>
+                        <th>产品批号</th>
+                        <th>总量 (分配)</th>
+                        <th>生产日期</th>
+                        <th>有效期至</th>
+                        <th>单价</th>
+                        <th>金额</th>
+                    </tr>
+                </thead>
+                <tbody id="allocationBody">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div id="inventory" class="tabcontent">
+            <table id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>商业公司</th>
+                        <th>产品名称</th>
+                        <th>产品批号</th>
+                        <th>库存总量</th>
+                        <th>生产日期</th>
+                        <th>有效期至</th>
+                        <th>单价</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryBody">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div id="clients" class="tabcontent">
+            <table id="clientsTable">
+                <thead>
+                    <tr>
+                        <th>商业公司</th>
+                        <th>客户名称</th>
+                        <th>剩余额度</th>
+                    </tr>
+                </thead>
+                <tbody id="clientsBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let inventoryData = []; // 对应 表1
+        let clientsData = [];   // 对应 表2
+        let allocationResult = []; // 对应 表3
+
+        // 辅助函数：将 Excel 日期序列号转换为 YYYY-MM-DD 格式
+        function excelDateToJSDate(excelDate) {
+            if (typeof excelDate === 'number') {
+                const date = new Date(Date.UTC(0, 0, excelDate - 1));
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            return excelDate; // 非数字则直接返回
+        }
+
+        // --- 数据加载与显示函数 (未修改，功能正确) ---
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                // 确保 raw: false 以正确处理日期和数字
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                
+                try {
+                    const sheetNames = workbook.SheetNames;
+                    // 尝试根据名称定位工作表，否则使用默认的第一个/第二个
+                    const invSheetName = sheetNames.find(name => name.includes('库存') || name.includes('1')) || sheetNames[0];
+                    const clientSheetName = sheetNames.find(name => name.includes('客户') || name.includes('2')) || sheetNames[1];
+
+                    const invSheet = workbook.Sheets[invSheetName];
+                    const clientSheet = workbook.Sheets[clientSheetName];
+
+                    if (!invSheet || !clientSheet) {
+                        alert('错误：未能找到包含 "库存数据" 和 "客户数据" 的工作表。请确保工作表名称中包含 "库存" 和 "客户" 或分别为第一个和第二个工作表。');
+                        return;
+                    }
+
+                    // 使用 header: 1 获取 AOA (Array of Arrays)
+                    const invAoa = XLSX.utils.sheet_to_json(invSheet, { header: 1, raw: false, dateNF: "YYYY-MM-DD" });
+                    const clientAoa = XLSX.utils.sheet_to_json(clientSheet, { header: 1, raw: false });
+                    
+                    // 假设第一行是表头，从第二行开始是数据
+                    inventoryData = invAoa.slice(1).map(row => [
+                        row[0], row[1], row[2], 
+                        Number(row[3]) || 0, // 库存总量 (数字)
+                        excelDateToJSDate(row[4]), // 生产日期
+                        excelDateToJSDate(row[5]), // 有效期至
+                        Number(row[6]) || 0  // 单价 (数字)
+                    ]).filter(row => row[0] && row[3] > 0); 
+
+                    clientsData = clientAoa.slice(1).map(row => [
+                        row[0], row[1], 
+                        Number(row[2]) || 0 // 剩余额度 (数字)
+                    ]).filter(row => row[0] && row[2] > 0); 
+
+                    if (inventoryData.length === 0 || clientsData.length === 0) {
+                        alert('错误：解析到的库存数据或客户数据为空。请检查文件格式。');
+                        document.getElementById('allocateBtn').disabled = true;
+                        updateSummary('错误：数据解析失败，请检查文件内容和格式。');
+                        return;
+                    }
+
+                    displayData(inventoryData, document.getElementById('inventoryBody'));
+                    displayData(clientsData, document.getElementById('clientsBody'));
+
+                    document.getElementById('allocateBtn').disabled = false;
+                    document.getElementById('exportBtn').disabled = true;
+                    updateSummary(`文件加载成功。库存记录: ${inventoryData.length} 条，客户记录: ${clientsData.length} 条。请点击 "执行分配"。`);
+
+                } catch (error) {
+                    console.error("文件解析错误:", error);
+                    alert('文件解析失败，请确保文件格式正确 (特别是日期格式)。' + error.message);
+                    document.getElementById('allocateBtn').disabled = true;
+                    updateSummary('错误：数据解析失败。');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayData(data, tbodyElement) {
+            tbodyElement.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                tbodyElement.appendChild(tr);
+            });
+        }
+        
+        function updateSummary(message) {
+            document.getElementById('summary').innerHTML = `<p>${message}</p>`;
+        }
+
+        // --- 核心分配逻辑 (已修复/优化) ---
+
+        function allocateInventory() {
+            if (inventoryData.length === 0 || clientsData.length === 0) {
+                alert('请先上传包含库存和客户数据的 Excel 文件并确保数据已加载。');
+                return;
+            }
+
+            // 1. 清空并初始化
+            document.getElementById('allocationBody').innerHTML = '';
+            allocationResult = [];
+            
+            // 2. 按商业公司分组库存和客户
+            const invByCompany = {};
+            inventoryData.forEach(row => {
+                const [company, productName, batchNo, quantity, prodDate, expDate, price] = row;
+                if (!invByCompany[company]) invByCompany[company] = [];
+                invByCompany[company].push({ company, productName, batchNo, quantity, prodDate, expDate, price });
+            });
+
+            const clientsByCompany = {};
+            clientsData.forEach(row => {
+                const [company, clientName, quota] = row;
+                if (!clientsByCompany[company]) clientsByCompany[company] = [];
+                clientsByCompany[company].push({ company, clientName, quota });
+            });
+
+            // 3. 核心分配循环
+            let totalInventory = inventoryData.reduce((sum, row) => sum + row[3], 0);
+            let totalAllocated = 0;
+            let totalRemainder = 0; // 用于验证，理论上应为 0
+
+            Object.keys(invByCompany).forEach(company => {
+                let companyInventory = invByCompany[company];
+                let companyClients = clientsByCompany[company] || [];
+                
+                if (companyClients.length === 0) {
+                    // 如果没有客户，库存全部剩余
+                    companyInventory.forEach(item => totalRemainder += item.quantity); 
+                    return;
+                }
+
+                // 规则3：对库存按批号排序（老批号优先，即字符串小的优先）
+                companyInventory.sort((a, b) => a.batchNo.localeCompare(b.batchNo));
+
+                // 规则2：按客户剩余额度排序（额度大的优先）
+                let clientsSorted = [...companyClients].sort((a, b) => b.quota - a.quota);
+                const totalQuota = clientsSorted.reduce((sum, client) => sum + client.quota, 0);
+                
+                // 临时分配Map，用于累加和处理尾数
+                const clientAllocationMap = new Map(); // Key: clientName_batchNo, Value: allocatedQty
+
+                // 遍历每个库存批次
+                companyInventory.forEach(invItem => {
+                    let { company, productName, batchNo, quantity, prodDate, expDate, price } = invItem;
+                    let allocatedSum = 0; // 记录按比例分配出去的总量
+                    
+                    // --- Pass 1: Proportional Allocation with Constraints ---
+                    clientsSorted.forEach(client => {
+                        const { clientName, quota } = client;
+                        // 客户没有额度，则比例分配为0
+                        const allocationRatio = totalQuota > 0 ? quota / totalQuota : 0; 
+                        
+                        // 1. 基于比例计算理想分配数量
+                        let proportionalQty = Math.round(quantity * allocationRatio);
+                        
+                        // 2. 规则4：调整为5的倍数
+                        let allocatedQty = Math.floor(proportionalQty / 5) * 5;
+
+                        // 3. 规则4：应用 50 盒起步原则
+                        if (allocatedQty < 50 && proportionalQty >= 5) {
+                            // 如果比例计算结果小于 50 但可以分配 (>= 5)，则按 50 盒起步分配
+                            allocatedQty = 50; 
+                        } else if (allocatedQty > 0 && allocatedQty < 50) {
+                             // 如果比例算出来是 > 0 且 < 50，但 proportionalQty < 5，则忽略比例分配，避免过度分散
+                             allocatedQty = 0;
+                        }
+
+                        // 4. 避免分配超过批次总库存
+                        allocatedQty = Math.min(allocatedQty, quantity);
+                        
+                        // 5. 确保总分配量不超过当前批次的剩余可分配量
+                        let remainingToAllocate = quantity - allocatedSum;
+                        allocatedQty = Math.min(allocatedQty, remainingToAllocate);
+                        
+                        // 6. 再次确保为5的倍数（如果被 min 截断）
+                        allocatedQty = Math.floor(allocatedQty / 5) * 5;
+
+                        if (allocatedQty > 0) {
+                            const key = `${clientName}_${batchNo}`;
+                            clientAllocationMap.set(key, (clientAllocationMap.get(key) || 0) + allocatedQty);
+                            allocatedSum += allocatedQty;
+                        }
+                    });
+
+                    // --- Pass 2: Residual Allocation (将剩余全部交给额度最大的客户) ---
+                    let residual = quantity - allocatedSum;
+                    
+                    if (residual > 0) {
+                        const largestClient = clientsSorted[0]; // 额度最大的客户
+                        const key = `${largestClient.clientName}_${batchNo}`;
+                        
+                        // 规则 1：严格分配总量，直接加上尾数（尾数可能不是5的倍数）
+                        const existingQty = clientAllocationMap.get(key) || 0;
+                        clientAllocationMap.set(key, existingQty + residual);
+                        
+                        allocatedSum += residual; // 更新分配总量
+                    }
+                    
+                    // --- Pass 3: Finalize Allocation Records for Display ---
+                    
+                    clientAllocationMap.forEach((qty, key) => {
+                        const [clientName, allocatedBatchNo] = key.split('_');
+                        
+                        // 只处理当前批次
+                        if (allocatedBatchNo === batchNo && qty > 0) {
+                            // 金额计算
+                            const amount = parseFloat((qty * price).toFixed(2));
+                            allocationResult.push([
+                                company, clientName, productName, allocatedBatchNo, qty, prodDate, expDate, price, amount
+                            ]);
+                        }
+                    });
+
+                    totalAllocated += allocatedSum;
+                });
+            });
+
+            // 5. 显示分配结果
+            displayData(allocationResult, document.getElementById('allocationBody'));
+            
+            // 6. 更新摘要和验证
+            const allocatedAmount = allocationResult.reduce((sum, row) => sum + row[8], 0);
+            const totalAmount = inventoryData.reduce((sum, row) => sum + row[3] * row[6], 0);
+            const isTotalMatch = totalInventory === totalAllocated;
+            totalRemainder = totalInventory - totalAllocated;
+
+            let summaryHtml = `
+                <p><strong>分配完成</strong></p>
+                <p>总库存量: ${totalInventory.toLocaleString()} 盒</p>
+                <p>已分配总量: ${totalAllocated.toLocaleString()} 盒</p>
+                <p>未分配总量: ${totalRemainder.toLocaleString()} 盒</p>
+                <p>分配记录数: ${allocationResult.length} 条</p>
+                <p style="color: ${isTotalMatch ? 'green' : 'red'}; font-weight: bold;">
+                    ${isTotalMatch ? '✓ 分配总量等于库存总量' : `❌ 分配总量 (${totalAllocated.toLocaleString()}) 不等于库存总量 (${totalInventory.toLocaleString()})`}
+                </p>
+                <p>分配总金额: ${allocatedAmount.toFixed(2)} 元</p>
+            `;
+            updateSummary(summaryHtml);
+
+            // 启用导出按钮
+            document.getElementById('exportBtn').disabled = false;
+            
+            // 切换到分配结果标签页
+            openTab(null, 'allocation');
+        }
+
+        // --- 导出功能 (未修改，功能正确) ---
+
+        function exportToExcel() {
+            if (allocationResult.length === 0) {
+                alert('请先执行分配操作并确保有分配结果。');
+                return;
+            }
+            
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 1. 分配结果工作表 (表3)
+            const allocationHeader = ['商业公司', '客户名称', '产品名称', '产品批号', '总量', '生产日期', '有效期至', '单价', '金额'];
+            const allocationDataForExport = [
+                allocationHeader,
+                ...allocationResult.map(row => [...row])
+            ];
+            const allocationWs = XLSX.utils.aoa_to_sheet(allocationDataForExport);
+            XLSX.utils.book_append_sheet(wb, allocationWs, '分配结果(表3)');
+            
+            // 2. 库存数据工作表 (表1)
+            const inventoryHeader = ['商业公司', '产品名称', '产品批号', '库存总量', '生产日期', '有效期至', '单价'];
+            const inventoryDataForExport = [
+                inventoryHeader,
+                ...inventoryData.map(row => [...row])
+            ];
+            const inventoryWs = XLSX.utils.aoa_to_sheet(inventoryDataForExport);
+            XLSX.utils.book_append_sheet(wb, inventoryWs, '原始库存(表1)');
+            
+            // 3. 客户数据工作表 (表2)
+            const clientsHeader = ['商业公司', '客户名称', '剩余额度'];
+            const clientsDataForExport = [
+                clientsHeader,
+                ...clientsData.map(row => [...row])
+            ];
+            const clientsWs = XLSX.utils.aoa_to_sheet(clientsDataForExport);
+            XLSX.utils.book_append_sheet(wb, clientsWs, '原始客户额度(表2)');
+            
+            // 导出Excel文件
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `库存分配结果_${dateStr}.xlsx`);
+        }
+
+        // --- 标签页切换函数 (未修改，功能正确) ---
+
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active-content");
+            }
+            
+            const tablinks = document.getElementsByClassName("tab");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active-content");
+            if (evt) {
+                evt.currentTarget.classList.add("active");
+            } else {
+                // 如果是程序调用，手动设置 active 样式
+                document.querySelector(`.tab[onclick*='${tabName}']`).classList.add("active");
+            }
+        }
+
+        // --- 事件监听和初始化 (未修改，功能正确) ---
+
+        document.getElementById('excelFile').addEventListener('change', handleFileSelect);
+        document.getElementById('allocateBtn').addEventListener('click', allocateInventory);
+        document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+
+        // 初始化页面时，默认显示分配结果 tab
+        document.addEventListener('DOMContentLoaded', () => {
+             // 确保初始状态是正确的
+            openTab(null, 'allocation'); 
+        });
+    </script>
+</body>
+</html>
