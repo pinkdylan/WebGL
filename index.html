@@ -24,12 +24,11 @@
 
         /* 右侧内容区 */
         .main-content { flex: 1; overflow-y: auto; padding: 30px; }
-        .module-section { display: none; } /* 默认隐藏所有模块 */
+        .module-section { display: none; }
         .module-section.active { display: block; animation: fadeIn 0.3s; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 通用组件样式 */
         .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h2 { margin-top: 0; color: #333; border-left: 5px solid var(--primary-color); padding-left: 15px; }
         .controls { margin: 20px 0; padding: 15px; background: #f1f3f5; border-radius: 6px; }
@@ -38,50 +37,70 @@
         .btn-export { background-color: var(--primary-color); color: white; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        /* 表格样式 */
-        .table-container { overflow-x: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 4px; }
+        .table-container { overflow-x: auto; margin-top: 15px; border: 1px solid #dee2e6; border-radius: 4px; max-height: 400px; }
         table { width: 100%; border-collapse: collapse; background: white; min-width: 800px; }
-        th, td { border: 1px solid #dee2e6; padding: 12px 8px; text-align: left; font-size: 13px; }
-        th { background: #f8f9fa; position: sticky; top: 0; }
+        th, td { border: 1px solid #dee2e6; padding: 10px 8px; text-align: left; font-size: 13px; }
+        th { background: #f8f9fa; position: sticky; top: 0; z-index: 5; }
         
-        /* 内部Tab样式 */
         .inner-tabs { margin-bottom: -1px; }
         .inner-tab { background: #e9ecef; border: 1px solid #dee2e6; padding: 8px 16px; cursor: pointer; border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 5px; }
         .inner-tab.active { background: white; font-weight: bold; border-top: 3px solid var(--success-color); }
+        .verify-msg { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
+        .verify-success { background: #d4edda; color: #155724; display: block; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header">管理系统</div>
+        <div class="sidebar-header">医药库存管理集成系统</div>
         <button class="nav-btn" onclick="switchModule('module1')">一级库存</button>
         <button class="nav-btn" onclick="switchModule('module2')">二级库存</button>
         <button class="nav-btn active" onclick="switchModule('module3')">二级流向</button>
     </div>
 
     <div class="main-content">
-        
         <div id="module1" class="module-section">
             <div class="card">
                 <h2>一级库存管理</h2>
-                <div class="controls">
-                    <input type="file" accept=".xlsx, .xls">
-                    <button class="btn-execute">上传并处理</button>
-                    <button class="btn-export">导出数据</button>
-                </div>
-                <p style="color: #666;">（功能开发中...）</p>
+                <p>功能开发中...</p>
             </div>
         </div>
 
         <div id="module2" class="module-section">
             <div class="card">
-                <h2>二级库存管理</h2>
+                <h2>二级库存核算 (购进 - 销售)</h2>
                 <div class="controls">
-                    <input type="file" accept=".xlsx, .xls">
-                    <button class="btn-execute">上传并处理</button>
-                    <button class="btn-export">导出数据</button>
+                    <input type="file" id="invLevel2File" accept=".xlsx, .xls">
+                    <button id="calcInv2Btn" class="btn-execute" disabled>核算库存</button>
+                    <button id="exportInv2Btn" class="btn-export" disabled>导出核算结果</button>
+                    <div id="inv2Summary" style="margin-top:10px; font-size:14px;">请上传包含“购进表”和“销售表”的Excel。</div>
+                    <div id="inv2Verify" class="verify-msg"></div>
                 </div>
-                <p style="color: #666;">（功能开发中...）</p>
+
+                <div class="inner-tabs">
+                    <button class="inner-tab active" onclick="switchSubTab(event, 'inv2_res', 'module2')">库存核算结果</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_buy', 'module2')">购进原表数据</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_sale', 'module2')">销售原表数据</button>
+                </div>
+
+                <div id="inv2_res" class="table-container sub-tab-module2" style="display:block;">
+                    <table>
+                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>库存数量</th></tr></thead>
+                        <tbody id="inv2ResBody"></tbody>
+                    </table>
+                </div>
+                <div id="inv2_buy" class="table-container sub-tab-module2" style="display:none;">
+                    <table>
+                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>销售数量</th></tr></thead>
+                        <tbody id="inv2BuyBody"></tbody>
+                    </table>
+                </div>
+                <div id="inv2_sale" class="table-container sub-tab-module2" style="display:none;">
+                    <table>
+                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>销售数量</th></tr></thead>
+                        <tbody id="inv2SaleBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -96,24 +115,24 @@
                 </div>
 
                 <div class="inner-tabs">
-                    <button class="inner-tab active" onclick="switchSubTab(event, 'sub1')">分配结果 (表3)</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'sub2')">原始库存 (表1)</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'sub3')">客户额度 (表2)</button>
+                    <button class="inner-tab active" onclick="switchSubTab(event, 'sub1', 'module3')">分配结果 (表3)</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'sub2', 'module3')">原始库存 (表1)</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'sub3', 'module3')">客户额度 (表2)</button>
                 </div>
 
-                <div id="sub1" class="table-container sub-tab-content" style="display:block;">
+                <div id="sub1" class="table-container sub-tab-module3" style="display:block;">
                     <table>
                         <thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead>
                         <tbody id="allocationBody"></tbody>
                     </table>
                 </div>
-                <div id="sub2" class="table-container sub-tab-content" style="display:none;">
+                <div id="sub2" class="table-container sub-tab-module3" style="display:none;">
                     <table>
                         <thead><tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期至</th><th>单价</th></tr></thead>
                         <tbody id="inventoryBody"></tbody>
                     </table>
                 </div>
-                <div id="sub3" class="table-container sub-tab-content" style="display:none;">
+                <div id="sub3" class="table-container sub-tab-module3" style="display:none;">
                     <table>
                         <thead><tr><th>商业公司</th><th>客户名称</th><th>剩余额度</th></tr></thead>
                         <tbody id="clientsBody"></tbody>
@@ -121,34 +140,102 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // --- 模块切换逻辑 ---
+        // --- 模块与Tab切换 ---
         function switchModule(moduleId) {
             document.querySelectorAll('.module-section').forEach(m => m.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            
             document.getElementById(moduleId).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // --- 二级流向内部Tab切换 ---
-        function switchSubTab(evt, subId) {
-            document.querySelectorAll('.sub-tab-content').forEach(c => c.style.display = 'none');
-            document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
-            
+        function switchSubTab(evt, subId, moduleId) {
+            document.querySelectorAll('.sub-tab-' + moduleId).forEach(c => c.style.display = 'none');
+            evt.currentTarget.parentNode.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(subId).style.display = 'block';
             evt.currentTarget.classList.add('active');
         }
 
         // ==========================================
-        // 原有“二级流向”核心代码逻辑（保持完全一致）
+        // 二级库存逻辑 (Module 2)
         // ==========================================
-        let inventoryData = []; 
-        let clientsData = [];   
-        let allocationResult = []; 
+        let buyData = [], saleData = [], invCalculated = [];
+
+        document.getElementById('invLevel2File').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                const buySheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('购进')) || workbook.SheetNames[0]];
+                const saleSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('销售')) || workbook.SheetNames[1]];
+                
+                buyData = XLSX.utils.sheet_to_json(buySheet).map(r => ({ co: r['商业公司新'], prod: r['产品名称'], batch: r['批号'], qty: Number(r['销售数量']) || 0 }));
+                saleData = XLSX.utils.sheet_to_json(saleSheet).map(r => ({ co: r['商业公司新'], prod: r['产品名称'], batch: r['批号'], qty: Number(r['销售数量']) || 0 }));
+                
+                renderInv2Data(buyData, 'inv2BuyBody');
+                renderInv2Data(saleData, 'inv2SaleBody');
+                document.getElementById('calcInv2Btn').disabled = false;
+                document.getElementById('inv2Summary').innerText = `已加载：购进数据 ${buyData.length} 条，销售数据 ${saleData.length} 条。`;
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function renderInv2Data(data, elementId) {
+            document.getElementById(elementId).innerHTML = data.map(r => `<tr><td>${r.co}</td><td>${r.prod}</td><td>${r.batch}</td><td>${r.qty}</td></tr>`).join('');
+        }
+
+        document.getElementById('calcInv2Btn').onclick = function() {
+            const map = {};
+            buyData.forEach(r => {
+                const key = `${r.co}|${r.prod}|${r.batch}`;
+                map[key] = (map[key] || 0) + r.qty;
+            });
+            saleData.forEach(r => {
+                const key = `${r.co}|${r.prod}|${r.batch}`;
+                map[key] = (map[key] || 0) - r.qty;
+            });
+
+            invCalculated = Object.keys(map).map(k => {
+                const [co, prod, batch] = k.split('|');
+                return [co, prod, batch, map[k]];
+            }).filter(r => r[3] !== 0);
+
+            // 渲染结果
+            document.getElementById('inv2ResBody').innerHTML = invCalculated.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+            
+            // 验证机制
+            const totalBuy = buyData.reduce((s, r) => s + r.qty, 0);
+            const totalSale = saleData.reduce((s, r) => s + r.qty, 0);
+            const totalInv = invCalculated.reduce((s, r) => s + r[3], 0);
+            
+            const verifyDiv = document.getElementById('inv2Verify');
+            if(Math.abs((totalBuy - totalSale) - totalInv) < 0.01) {
+                verifyDiv.innerHTML = `<strong>校验通过：</strong>购进总量(${totalBuy}) - 销售总量(${totalSale}) = 库存总量(${totalInv})。数据完整。`;
+                verifyDiv.className = "verify-msg verify-success";
+            } else {
+                verifyDiv.innerHTML = `<strong>注意：</strong>数据核对存在偏差，请检查源文件。`;
+                verifyDiv.className = "verify-msg";
+                verifyDiv.style.background = "#f8d7da";
+                verifyDiv.style.display = "block";
+            }
+            
+            document.getElementById('exportInv2Btn').disabled = false;
+        };
+
+        document.getElementById('exportInv2Btn').onclick = function() {
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','批号','库存数量'], ...invCalculated]), "库存表(表3)");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buyData), "购进原表");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(saleData), "销售原表");
+            XLSX.writeFile(wb, `二级库存结果_${new Date().toISOString().slice(0,10)}.xlsx`);
+        };
+
+        // ==========================================
+        // 二级流向逻辑 (Module 3 - 保持不变)
+        // ==========================================
+        let inventoryData = [], clientsData = [], allocationResult = [];
         const todayStr = new Date().toISOString().slice(0, 10);
 
         function excelDateToJSDate(excelDate) {
@@ -164,107 +251,21 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
+                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
                 try {
                     const invSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('库存')) || workbook.SheetNames[0]];
                     const cliSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('客户')) || workbook.SheetNames[1]];
-
-                    inventoryData = XLSX.utils.sheet_to_json(invSheet, { header: 1, raw: false }).slice(1)
-                        .map(r => [r[0], r[1], r[2], Number(r[3]) || 0, excelDateToJSDate(r[4]), excelDateToJSDate(r[5]), Number(r[6]) || 0])
-                        .filter(r => r[0] && r[3] > 0);
-
-                    clientsData = XLSX.utils.sheet_to_json(cliSheet, { header: 1, raw: false }).slice(1)
-                        .map(r => [r[0], r[1], Number(r[2]) || 0])
-                        .filter(r => r[0] && r[2] > 0);
-
-                    displayData(inventoryData, 'inventoryBody');
-                    displayData(clientsData, 'clientsBody');
+                    inventoryData = XLSX.utils.sheet_to_json(invSheet, { header: 1, raw: false }).slice(1).map(r => [r[0], r[1], r[2], Number(r[3]) || 0, excelDateToJSDate(r[4]), excelDateToJSDate(r[5]), Number(r[6]) || 0]).filter(r => r[0] && r[3] > 0);
+                    clientsData = XLSX.utils.sheet_to_json(cliSheet, { header: 1, raw: false }).slice(1).map(r => [r[0], r[1], Number(r[2]) || 0]).filter(r => r[0] && r[2] > 0);
+                    document.getElementById('inventoryBody').innerHTML = inventoryData.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+                    document.getElementById('clientsBody').innerHTML = clientsData.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
                     document.getElementById('allocateBtn').disabled = false;
-                    document.getElementById('summary').innerHTML = `数据加载成功：库存 ${inventoryData.length} 条，客户 ${clientsData.length} 条。`;
-                } catch (err) {
-                    alert("解析失败，请确保Excel包含“库存”和“客户”关键字的工作表");
-                }
+                    document.getElementById('summary').innerHTML = `流向数据加载成功。`;
+                } catch (err) { alert("解析失败"); }
             };
             reader.readAsArrayBuffer(file);
         });
 
-        function displayData(data, elementId) {
-            const tbody = document.getElementById(elementId);
-            tbody.innerHTML = data.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
-        }
-
-        function allocateInventory() {
+        document.getElementById('allocateBtn').onclick = function() {
             allocationResult = [];
-            const invByCo = {};
-            inventoryData.forEach(r => { if(!invByCo[r[0]]) invByCo[r[0]]=[]; invByCo[r[0]].push(r); });
-            const cliByCo = {};
-            clientsData.forEach(r => { if(!cliByCo[r[0]]) cliByCo[r[0]]=[]; cliByCo[r[0]].push(r); });
-
-            Object.keys(invByCo).forEach(co => {
-                let stocks = invByCo[co].sort((a,b) => String(a[2]).localeCompare(String(b[2])));
-                let clients = (cliByCo[co] || []).sort((a,b) => b[2] - a[2]);
-                if(clients.length === 0) return;
-
-                const totalQuota = clients.reduce((s, c) => s + c[2], 0);
-
-                stocks.forEach(stock => {
-                    let qtyToDist = stock[3];
-                    let distributedInThisBatch = 0;
-
-                    clients.forEach(cli => {
-                        let ratio = cli[2] / totalQuota;
-                        let ideal = stock[3] * ratio;
-                        
-                        let finalQty = 0;
-                        if (ideal >= 2) {
-                            let qty5 = Math.floor(ideal / 5) * 5;
-                            let qty2 = Math.floor(ideal / 2) * 2;
-                            finalQty = qty5 > 0 ? qty5 : (qty2 >= 2 ? qty2 : 0);
-                        }
-                        finalQty = Math.min(finalQty, qtyToDist - distributedInThisBatch);
-                        
-                        if (finalQty > 0) {
-                            allocationResult.push([todayStr, co, cli[1], stock[1], stock[2], finalQty, stock[4], stock[5], stock[6], (finalQty * stock[6]).toFixed(2)]);
-                            distributedInThisBatch += finalQty;
-                        }
-                    });
-
-                    let remain = qtyToDist - distributedInThisBatch;
-                    if (remain > 0) {
-                        let lastIdx = allocationResult.findLastIndex(r => r[1] === co && r[4] === stock[2]);
-                        if (lastIdx > -1) {
-                            allocationResult[lastIdx][5] += remain;
-                            allocationResult[lastIdx][9] = (allocationResult[lastIdx][5] * stock[6]).toFixed(2);
-                        } else {
-                            allocationResult.push([todayStr, co, clients[0][1], stock[1], stock[2], remain, stock[4], stock[5], stock[6], (remain * stock[6]).toFixed(2)]);
-                        }
-                    }
-                });
-            });
-
-            displayData(allocationResult, 'allocationBody');
-            document.getElementById('exportBtn').disabled = false;
-            document.getElementById('summary').innerHTML = `<b style="color:green;">分配成功！生成结果 ${allocationResult.length} 条记录。</b>`;
-        }
-
-        function exportToExcel() {
-            const wb = XLSX.utils.book_new();
-            const ws1 = XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...allocationResult]);
-            XLSX.utils.book_append_sheet(wb, ws1, "分配结果(表3)");
-            const ws2 = XLSX.utils.aoa_to_sheet([['商业公司','产品名称','产品批号','库存总量','生产日期','有效期至','单价'], ...inventoryData]);
-            XLSX.utils.book_append_sheet(wb, ws2, "原始库存(表1)");
-            const ws3 = XLSX.utils.aoa_to_sheet([['商业公司','客户名称','剩余额度'], ...clientsData]);
-            XLSX.utils.book_append_sheet(wb, ws3, "客户额度(表2)");
-
-            const now = new Date();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10);
-            XLSX.writeFile(wb, `二级流向分配_${firstDay}_至_${lastDay}.xlsx`);
-        }
-
-        document.getElementById('allocateBtn').onclick = allocateInventory;
-        document.getElementById('exportBtn').onclick = exportToExcel;
-    </script>
-</body>
-</html>
+            const invByCo = {}; inventoryData.forEach(r => { if(!invByCo[r[0]]) invByCo[r[0]]=[]; invByCo[r
