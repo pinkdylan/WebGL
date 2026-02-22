@@ -77,30 +77,19 @@
                     <div id="inv1Summary" class="hint-text">等待文件上传...</div>
                     <div id="inv1Verify" class="verify-msg"></div>
                 </div>
-
                 <div class="inner-tabs">
                     <button class="inner-tab active" onclick="switchSubTab(event, 'inv1_res', 'module1')">库存结果表</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'inv1_buy', 'module1')">购进明细</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'inv1_sale', 'module1')">销售明细</button>
                 </div>
-
                 <div id="inv1_res" class="table-container sub-tab-module1" style="display:block;">
-                    <table>
-                        <thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>库存数量</th></tr></thead>
-                        <tbody id="inv1ResBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>库存数量</th></tr></thead><tbody id="inv1ResBody"></tbody></table>
                 </div>
                 <div id="inv1_buy" class="table-container sub-tab-module1" style="display:none;">
-                    <table>
-                        <thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>购进数量</th></tr></thead>
-                        <tbody id="inv1BuyBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>购进数量</th></tr></thead><tbody id="inv1BuyBody"></tbody></table>
                 </div>
                 <div id="inv1_sale" class="table-container sub-tab-module1" style="display:none;">
-                    <table>
-                        <thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>销售数量</th></tr></thead>
-                        <tbody id="inv1SaleBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商品编号</th><th>通用名</th><th>规格</th><th>批号</th><th>生产日期</th><th>有效期至</th><th>销售数量</th></tr></thead><tbody id="inv1SaleBody"></tbody></table>
                 </div>
             </div>
         </div>
@@ -112,34 +101,23 @@
                     <label>上传Excel（包含“购进”和“销售”表）：</label>
                     <input type="file" id="invLevel2File" accept=".xlsx, .xls">
                     <button id="calcInv2Btn" class="btn-execute" disabled>执行核算对账</button>
-                    <button id="exportInv2Btn" class="btn-export" disabled>导出核算报表</button>
+                    <button id="exportInv2Btn" class="btn-export" disabled>导出完整报表(含明细)</button>
                     <div id="inv2Summary" class="hint-text">等待文件上传...</div>
                     <div id="inv2Verify" class="verify-msg"></div>
                 </div>
-
                 <div class="inner-tabs">
                     <button class="inner-tab active" onclick="switchSubTab(event, 'inv2_res', 'module2')">库存核算结果</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'inv2_buy', 'module2')">原始购进明细</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'inv2_sale', 'module2')">原始销售明细</button>
                 </div>
-
                 <div id="inv2_res" class="table-container sub-tab-module2" style="display:block;">
-                    <table>
-                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>库存数量</th></tr></thead>
-                        <tbody id="inv2ResBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>库存数量</th></tr></thead><tbody id="inv2ResBody"></tbody></table>
                 </div>
                 <div id="inv2_buy" class="table-container sub-tab-module2" style="display:none;">
-                    <table>
-                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>购进数量</th></tr></thead>
-                        <tbody id="inv2BuyBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>购进数量</th></tr></thead><tbody id="inv2BuyBody"></tbody></table>
                 </div>
                 <div id="inv2_sale" class="table-container sub-tab-module2" style="display:none;">
-                    <table>
-                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>销售数量</th></tr></thead>
-                        <tbody id="inv2SaleBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>销售数量</th></tr></thead><tbody id="inv2SaleBody"></tbody></table>
                 </div>
             </div>
         </div>
@@ -154,37 +132,26 @@
                     <button id="exportBtn" class="btn-export" disabled>导出分配结果</button>
                     <div id="summary" class="hint-text">等待上传文件...</div>
                 </div>
-
                 <div class="inner-tabs">
                     <button class="inner-tab active" onclick="switchSubTab(event, 'sub1', 'module3')">分配结果 (表3)</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'sub2', 'module3')">原始库存 (表1)</button>
                     <button class="inner-tab" onclick="switchSubTab(event, 'sub3', 'module3')">客户额度 (表2)</button>
                 </div>
-
                 <div id="sub1" class="table-container sub-tab-module3" style="display:block;">
-                    <table>
-                        <thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期至</th><th>单价</th><th>金额</th></tr></thead>
-                        <tbody id="allocationBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期至</th><th>单价</th><th>金额</th></tr></thead><tbody id="allocationBody"></tbody></table>
                 </div>
                 <div id="sub2" class="table-container sub-tab-module3" style="display:none;">
-                    <table>
-                        <thead><tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期至</th><th>单价</th></tr></thead>
-                        <tbody id="inventoryBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期至</th><th>单价</th></tr></thead><tbody id="inventoryBody"></tbody></table>
                 </div>
                 <div id="sub3" class="table-container sub-tab-module3" style="display:none;">
-                    <table>
-                        <thead><tr><th>商业公司</th><th>客户名称</th><th>剩余额度</th></tr></thead>
-                        <tbody id="clientsBody"></tbody>
-                    </table>
+                    <table><thead><tr><th>商业公司</th><th>客户名称</th><th>剩余额度</th></tr></thead><tbody id="clientsBody"></tbody></table>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 导航与工具函数 ---
+        // --- 通用切换函数 ---
         function switchModule(moduleId) {
             document.querySelectorAll('.module-section').forEach(m => m.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -211,30 +178,25 @@
         function renderTable(id, data, keys) {
             const body = document.getElementById(id);
             if (!keys) {
-                body.innerHTML = data.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+                body.innerHTML = data.map(r => `<tr>${r.map(c => `<td>${c || ''}</td>`).join('')}</tr>`).join('');
             } else {
-                body.innerHTML = data.map(r => `<tr>${keys.map(k => `<td>${r[k] || ''}</td>`).join('')}</tr>`).join('');
+                body.innerHTML = data.map(r => `<tr>${keys.map(k => `<td>${r[k] !== undefined ? r[k] : ''}</td>`).join('')}</tr>`).join('');
             }
         }
 
         // ==========================================
-        // 一级库存逻辑 (全中文标题)
+        // 一级库存逻辑 (保持原样)
         // ==========================================
         let buy1Raw = [], sale1Raw = [], inv1Calculated = [];
-
         document.getElementById('invLevel1File').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = function(event) {
                 const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const bS = wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))];
-                const sS = wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))];
-                buy1Raw = XLSX.utils.sheet_to_json(bS);
-                sale1Raw = XLSX.utils.sheet_to_json(sS);
-                
-                const bDisp = buy1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: Number(r['购进数量']) || 0 }));
-                const sDisp = sale1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: Number(r['销售数量']) || 0 }));
-                
+                buy1Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))]);
+                sale1Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))]);
+                const bDisp = buy1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: r['购进数量'] }));
+                const sDisp = sale1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: r['销售数量'] }));
                 renderTable('inv1BuyBody', bDisp, ['id','name','spec','batch','dp','de','q']);
                 renderTable('inv1SaleBody', sDisp, ['id','name','spec','batch','dp','de','q']);
                 document.getElementById('calcInv1Btn').disabled = false;
@@ -244,19 +206,11 @@
 
         document.getElementById('calcInv1Btn').onclick = function() {
             const map = {};
-            buy1Raw.forEach(r => {
-                const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`;
-                map[k] = (map[k] || 0) + (Number(r['购进数量']) || 0);
-            });
-            sale1Raw.forEach(r => {
-                const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`;
-                map[k] = (map[k] || 0) - (Number(r['销售数量']) || 0);
-            });
+            buy1Raw.forEach(r => { const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`; map[k] = (map[k] || 0) + (Number(r['购进数量']) || 0); });
+            sale1Raw.forEach(r => { const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`; map[k] = (map[k] || 0) - (Number(r['销售数量']) || 0); });
             inv1Calculated = Object.keys(map).map(k => [...k.split('|'), map[k]]).filter(r => r[6] !== 0);
             renderTable('inv1ResBody', inv1Calculated);
             document.getElementById('exportInv1Btn').disabled = false;
-            document.getElementById('inv1Verify').innerHTML = "一级库存核算完成。";
-            document.getElementById('inv1Verify').className = "verify-msg verify-success";
         };
 
         document.getElementById('exportInv1Btn').onclick = function() {
@@ -268,10 +222,9 @@
         };
 
         // ==========================================
-        // 二级库存逻辑 (包含原始数据导出)
+        // 二级库存逻辑 (修复批号映射)
         // ==========================================
         let buy2Raw = [], sale2Raw = [], inv2Calculated = [];
-
         document.getElementById('invLevel2File').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
@@ -280,7 +233,8 @@
                 buy2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))]);
                 sale2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))]);
                 
-                const bDisp = buy2Raw.map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: r['销售数量'] }));
+                // 重点：显式映射原表的“批号”字段
+                const bDisp = buy2Raw.map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: (r['购进数量'] !== undefined ? r['购进数量'] : r['销售数量']) }));
                 const sDisp = sale2Raw.map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: r['销售数量'] }));
                 
                 renderTable('inv2BuyBody', bDisp, ['co','p','b','q']);
@@ -292,8 +246,17 @@
 
         document.getElementById('calcInv2Btn').onclick = function() {
             const m = {};
-            buy2Raw.forEach(r => { const k=`${r['商业公司新']}|${r['产品名称']}|${r['批号']}`; m[k] = (m[k]||0) + (Number(r['销售数量'])||0); });
-            sale2Raw.forEach(r => { const k=`${r['商业公司新']}|${r['产品名称']}|${r['批号']}`; m[k] = (m[k]||0) - (Number(r['销售数量'])||0); });
+            // 购进加法
+            buy2Raw.forEach(r => { 
+                const k = `${r['商业公司新'] || '无'}|${r['产品名称'] || '无'}|${r['批号'] || '无'}`; 
+                const qty = Number(r['购进数量'] !== undefined ? r['购进数量'] : r['销售数量']) || 0;
+                m[k] = (m[k] || 0) + qty; 
+            });
+            // 销售减法
+            sale2Raw.forEach(r => { 
+                const k = `${r['商业公司新'] || '无'}|${r['产品名称'] || '无'}|${r['批号'] || '无'}`; 
+                m[k] = (m[k] || 0) - (Number(r['销售数量']) || 0); 
+            });
             inv2Calculated = Object.keys(m).map(k => [...k.split('|'), m[k]]).filter(r => r[3] !== 0);
             renderTable('inv2ResBody', inv2Calculated);
             document.getElementById('exportInv2Btn').disabled = false;
@@ -301,26 +264,23 @@
 
         document.getElementById('exportInv2Btn').onclick = function() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','批号','库存数量'], ...inv2Calculated]), "库存核算结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','批号','库存数量'], ...inv2Calculated]), "库存结果");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buy2Raw), "原始购进明细");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sale2Raw), "原始销售明细");
             XLSX.writeFile(wb, `二级库存报表_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         // ==========================================
-        // 二级流向逻辑
+        // 二级流向分配逻辑 (保持原样)
         // ==========================================
         let flowInvRaw = [], flowCliRaw = [], flowRes = [];
-
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = function(event) {
                 const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const iS = wb.Sheets[wb.SheetNames.find(n => n.includes('库存'))];
-                const cS = wb.Sheets[wb.SheetNames.find(n => n.includes('客户'))];
-                flowInvRaw = XLSX.utils.sheet_to_json(iS, {header:1}).slice(1);
-                flowCliRaw = XLSX.utils.sheet_to_json(cS, {header:1}).slice(1);
+                flowInvRaw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('库存'))], {header:1}).slice(1);
+                flowCliRaw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('客户'))], {header:1}).slice(1);
                 renderTable('inventoryBody', flowInvRaw);
                 renderTable('clientsBody', flowCliRaw);
                 document.getElementById('allocateBtn').disabled = false;
@@ -333,13 +293,11 @@
             const coInv = {}; flowInvRaw.forEach(r => { if(!coInv[r[0]]) coInv[r[0]]=[]; coInv[r[0]].push(r); });
             const coCli = {}; flowCliRaw.forEach(r => { if(!coCli[r[0]]) coCli[r[0]]=[]; coCli[r[0]].push(r); });
             const today = new Date().toISOString().slice(0,10);
-
             Object.keys(coInv).forEach(co => {
                 let stocks = coInv[co];
                 let clients = (coCli[co]||[]).sort((a,b)=>b[2]-a[2]);
                 if(!clients.length) return;
                 const totalQ = clients.reduce((s,c)=>s+Number(c[2]),0);
-
                 stocks.forEach(st => {
                     let rem = Number(st[3]), dist = 0;
                     clients.forEach(cl => {
