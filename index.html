@@ -3,53 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>库存分配系统 (倍数优化版)</title>
+    <title>库存分配系统 (专业多表版)</title>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-        /* 样式部分保持不变 */
         body { font-family: 'Microsoft YaHei', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { color: #333; text-align: center; margin-bottom: 20px; }
         .controls { margin-bottom: 20px; text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9; }
         input[type="file"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 15px; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; transition: background-color 0.3s; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; transition: background-color 0.3s; margin: 0 5px; }
         #allocateBtn { background-color: #4CAF50; }
         #allocateBtn:hover { background-color: #45a049; }
+        #exportBtn { background-color: #007bff; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
         th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 10; }
         .summary { background-color: #e9f7ef; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 5px solid #4CAF50; }
-        .tabs { overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1; }
-        .tab { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; }
-        .tab.active { background-color: white; border-bottom: 2px solid #4CAF50; }
-        .tabcontent { display: none; max-height: 500px; overflow-y: auto; padding: 6px 12px; border: 1px solid #ccc; border-top: none; }
+        .tabs { overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1; border-radius: 4px 4px 0 0; }
+        .tab { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; border-right: 1px solid #ccc; }
+        .tab.active { background-color: white; border-bottom: 2px solid #4CAF50; font-weight: bold; }
+        .tabcontent { display: none; max-height: 500px; overflow-y: auto; padding: 12px; border: 1px solid #ccc; border-top: none; background: white; }
         .active-content { display: block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>库存分配系统 (2/5倍数优化)</h1>
+        <h1>库存分配系统 (2/5倍数+多表导出)</h1>
+        
         <div class="controls">
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
             <button id="allocateBtn" disabled>执行分配</button>
-            <button id="exportBtn" disabled>导出Excel</button>
+            <button id="exportBtn" disabled>导出完整Excel</button>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">最小2盒起配，优先5的倍数，其次2的倍数</p>
         </div>
-        <div class="summary" id="summary"><p>等待上传文件...</p></div>
+        
+        <div class="summary" id="summary">
+            <p><strong>系统状态：</strong>等待上传文件...</p>
+        </div>
+        
         <div class="tabs">
             <button class="tab active" onclick="openTab(event, 'allocation')">分配结果 (表3)</button>
             <button class="tab" onclick="openTab(event, 'inventory')">原始库存 (表1)</button>
             <button class="tab" onclick="openTab(event, 'clients')">客户额度 (表2)</button>
         </div>
-        <div id="allocation" class="tabcontent active-content"><table id="allocationTable"><thead><tr><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead><tbody id="allocationBody"></tbody></table></div>
-        <div id="inventory" class="tabcontent"><table id="inventoryTable"><thead><tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期</th><th>单价</th></tr></thead><tbody id="inventoryBody"></tbody></table></div>
-        <div id="clients" class="tabcontent"><table id="clientsTable"><thead><tr><th>商业公司</th><th>客户名称</th><th>剩余额度</th></tr></thead><tbody id="clientsBody"></tbody></table></div>
+        
+        <div id="allocation" class="tabcontent active-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th>
+                    </tr>
+                </thead>
+                <tbody id="allocationBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="inventory" class="tabcontent">
+            <table>
+                <thead>
+                    <tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期至</th><th>单价</th></tr>
+                </thead>
+                <tbody id="inventoryBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="clients" class="tabcontent">
+            <table>
+                <thead>
+                    <tr><th>商业公司</th><th>客户名称</th><th>剩余额度</th></tr>
+                </thead>
+                <tbody id="clientsBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        let inventoryData = [];
-        let clientsData = [];
-        let allocationResult = [];
+        let inventoryData = []; 
+        let clientsData = [];   
+        let allocationResult = []; 
+        const todayStr = new Date().toISOString().slice(0, 10);
 
         function excelDateToJSDate(excelDate) {
             if (typeof excelDate === 'number') {
@@ -61,25 +94,38 @@
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(event) {
-                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const invSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const cliSheet = workbook.Sheets[workbook.SheetNames[1]];
-                
-                inventoryData = XLSX.utils.sheet_to_json(invSheet, { header: 1 }).slice(1)
-                    .map(r => [r[0], r[1], r[2], Number(r[3]), excelDateToJSDate(r[4]), excelDateToJSDate(r[5]), Number(r[6])])
-                    .filter(r => r[0] && r[3] > 0);
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                try {
+                    const invSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('库存')) || workbook.SheetNames[0]];
+                    const cliSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('客户')) || workbook.SheetNames[1]];
 
-                clientsData = XLSX.utils.sheet_to_json(cliSheet, { header: 1 }).slice(1)
-                    .map(r => [r[0], r[1], Number(r[2])])
-                    .filter(r => r[0] && r[2] > 0);
+                    inventoryData = XLSX.utils.sheet_to_json(invSheet, { header: 1, raw: false }).slice(1)
+                        .map(r => [r[0], r[1], r[2], Number(r[3]) || 0, excelDateToJSDate(r[4]), excelDateToJSDate(r[5]), Number(r[6]) || 0])
+                        .filter(r => r[0] && r[3] > 0);
 
-                document.getElementById('allocateBtn').disabled = false;
-                document.getElementById('summary').innerHTML = `<p>数据加载成功，准备分配。</p>`;
+                    clientsData = XLSX.utils.sheet_to_json(cliSheet, { header: 1, raw: false }).slice(1)
+                        .map(r => [r[0], r[1], Number(r[2]) || 0])
+                        .filter(r => r[0] && r[2] > 0);
+
+                    displayData(inventoryData, 'inventoryBody');
+                    displayData(clientsData, 'clientsBody');
+                    document.getElementById('allocateBtn').disabled = false;
+                    document.getElementById('summary').innerHTML = `<p>文件加载成功。库存: ${inventoryData.length}条, 客户: ${clientsData.length}条。</p>`;
+                } catch (err) {
+                    alert("解析失败，请检查Excel格式");
+                }
             };
             reader.readAsArrayBuffer(file);
         });
+
+        function displayData(data, elementId) {
+            const tbody = document.getElementById(elementId);
+            tbody.innerHTML = data.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+        }
 
         function allocateInventory() {
             allocationResult = [];
@@ -89,7 +135,7 @@
             clientsData.forEach(r => { if(!cliByCo[r[0]]) cliByCo[r[0]]=[]; cliByCo[r[0]].push(r); });
 
             Object.keys(invByCo).forEach(co => {
-                let stocks = invByCo[co].sort((a,b) => a[2].localeCompare(b[2]));
+                let stocks = invByCo[co].sort((a,b) => String(a[2]).localeCompare(String(b[2])));
                 let clients = (cliByCo[co] || []).sort((a,b) => b[2] - a[2]);
                 if(clients.length === 0) return;
 
@@ -97,62 +143,69 @@
 
                 stocks.forEach(stock => {
                     let qtyToDist = stock[3];
-                    let distributed = 0;
+                    let distributedInThisBatch = 0;
 
-                    clients.forEach((cli, idx) => {
+                    clients.forEach(cli => {
                         let ratio = cli[2] / totalQuota;
                         let ideal = stock[3] * ratio;
                         
-                        // 修改点：2或5的倍数，最小2盒
                         let finalQty = 0;
                         if (ideal >= 2) {
-                            // 优先尝试5的倍数，其次2的倍数
                             let qty5 = Math.floor(ideal / 5) * 5;
                             let qty2 = Math.floor(ideal / 2) * 2;
                             finalQty = qty5 > 0 ? qty5 : (qty2 >= 2 ? qty2 : 0);
                         }
 
-                        finalQty = Math.min(finalQty, qtyToDist - distributed);
+                        finalQty = Math.min(finalQty, qtyToDist - distributedInThisBatch);
                         
                         if (finalQty > 0) {
-                            allocationResult.push([co, cli[1], stock[1], stock[2], finalQty, stock[4], stock[5], stock[6], (finalQty * stock[6]).toFixed(2)]);
-                            distributed += finalQty;
+                            allocationResult.push([todayStr, co, cli[1], stock[1], stock[2], finalQty, stock[4], stock[5], stock[6], (finalQty * stock[6]).toFixed(2)]);
+                            distributedInThisBatch += finalQty;
                         }
                     });
 
-                    // 尾数处理：补给大客户
-                    let remain = qtyToDist - distributed;
+                    let remain = qtyToDist - distributedInThisBatch;
                     if (remain > 0) {
-                        let lastIdx = allocationResult.findLastIndex(r => r[0] === co && r[3] === stock[2]);
+                        let lastIdx = allocationResult.findLastIndex(r => r[1] === co && r[4] === stock[2]);
                         if (lastIdx > -1) {
-                            allocationResult[lastIdx][4] += remain;
-                            allocationResult[lastIdx][8] = (allocationResult[lastIdx][4] * stock[6]).toFixed(2);
+                            allocationResult[lastIdx][5] += remain;
+                            allocationResult[lastIdx][9] = (allocationResult[lastIdx][5] * stock[6]).toFixed(2);
                         } else {
-                            allocationResult.push([co, clients[0][1], stock[1], stock[2], remain, stock[4], stock[5], stock[6], (remain * stock[6]).toFixed(2)]);
+                            allocationResult.push([todayStr, co, clients[0][1], stock[1], stock[2], remain, stock[4], stock[5], stock[6], (remain * stock[6]).toFixed(2)]);
                         }
                     }
                 });
             });
-            renderTable();
-            document.getElementById('exportBtn').disabled = false;
-        }
 
-        function renderTable() {
-            const body = document.getElementById('allocationBody');
-            body.innerHTML = allocationResult.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+            displayData(allocationResult, 'allocationBody');
+            document.getElementById('exportBtn').disabled = false;
+            document.getElementById('summary').innerHTML = `<p style="color:green;">分配完成！生成记录: ${allocationResult.length}条</p>`;
         }
 
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet([['商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...allocationResult]);
-            XLSX.utils.book_append_sheet(wb, ws, "结果");
             
-            // 修改点：日期为本月1号到月底
+            // Sheet 1: 分配结果
+            const resHeader = [['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额']];
+            const ws1 = XLSX.utils.aoa_to_sheet(resHeader.concat(allocationResult));
+            XLSX.utils.book_append_sheet(wb, ws1, "分配结果(表3)");
+
+            // Sheet 2: 原始库存
+            const invHeader = [['商业公司','产品名称','产品批号','库存总量','生产日期','有效期至','单价']];
+            const ws2 = XLSX.utils.aoa_to_sheet(invHeader.concat(inventoryData));
+            XLSX.utils.book_append_sheet(wb, ws2, "原始库存(表1)");
+
+            // Sheet 3: 客户额度
+            const cliHeader = [['商业公司','客户名称','剩余额度']];
+            const ws3 = XLSX.utils.aoa_to_sheet(cliHeader.concat(clientsData));
+            XLSX.utils.book_append_sheet(wb, ws3, "客户额度(表2)");
+
+            // 日期逻辑
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10);
             
-            XLSX.writeFile(wb, `库存分配_${firstDay}_至_${lastDay}.xlsx`);
+            XLSX.writeFile(wb, `库存分配结果_${firstDay}_至_${lastDay}.xlsx`);
         }
 
         function openTab(evt, name) {
