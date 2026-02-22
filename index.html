@@ -15,7 +15,7 @@
 
         body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg-color); }
 
-        /* 导航栏 */
+        /* 侧边导航 */
         .sidebar { width: 220px; background: #343a40; color: white; display: flex; flex-direction: column; }
         .sidebar-header { padding: 25px 20px; text-align: center; font-size: 1.1rem; font-weight: bold; border-bottom: 1px solid #454d55; }
         .nav-btn { border: none; background: none; color: #adb5bd; padding: 18px 25px; text-align: left; cursor: pointer; transition: 0.3s; font-size: 15px; border-left: 4px solid transparent; }
@@ -23,34 +23,38 @@
         .nav-btn.active { background: #495057; color: white; border-left-color: var(--primary-color); }
 
         /* 内容区 */
-        .main-content { flex: 1; overflow-y: auto; padding: 30px; }
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; }
         .module-section { display: none; }
         .module-section.active { display: block; }
 
         .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #333; border-left: 5px solid var(--primary-color); padding-left: 15px; font-size: 18px; }
+        h2 { margin-top: 0; color: #333; border-left: 5px solid var(--primary-color); padding-left: 15px; font-size: 18px; margin-bottom: 20px; }
         
-        .controls { margin: 20px 0; padding: 15px; background: #f1f3f5; border-radius: 6px; }
-        button { border: none; padding: 10px 18px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-right: 10px; }
+        .controls { margin-bottom: 20px; padding: 15px; background: #f1f3f5; border-radius: 6px; }
+        .controls label { display: block; margin-bottom: 10px; font-weight: bold; color: #555; }
+        
+        button { border: none; padding: 10px 18px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-right: 10px; transition: 0.2s; }
         .btn-execute { background-color: var(--success-color); color: white; }
+        .btn-execute:hover { background-color: #218838; }
         .btn-export { background-color: var(--primary-color); color: white; }
+        .btn-export:hover { background-color: #0069d9; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
 
         .table-container { overflow-x: auto; margin-top: 15px; border: 1px solid #dee2e6; max-height: 450px; }
         table { width: 100%; border-collapse: collapse; background: white; min-width: 900px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 13px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 13px; white-space: nowrap; }
         th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
 
         .inner-tabs { display: flex; margin-bottom: -1px; }
-        .inner-tab { background: #e9ecef; border: 1px solid #dee2e6; padding: 8px 16px; cursor: pointer; border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 5px; font-size: 13px; }
-        .inner-tab.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); }
+        .inner-tab { background: #e9ecef; border: 1px solid #dee2e6; padding: 8px 16px; cursor: pointer; border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 5px; font-size: 13px; color: #666; }
+        .inner-tab.active { background: white; font-weight: bold; border-top: 3px solid var(--primary-color); color: var(--primary-color); }
         .summary-msg { margin-top: 10px; color: #155724; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header">库存流向集成管理</div>
+        <div class="sidebar-header">医药集成管理系统</div>
         <button class="nav-btn" onclick="switchModule('module1', this)">一级库存</button>
         <button class="nav-btn" onclick="switchModule('module2', this)">二级库存</button>
         <button class="nav-btn active" onclick="switchModule('module3', this)">二级流向</button>
@@ -61,8 +65,9 @@
             <div class="card">
                 <h2>一级库存核算 (购进 - 销售)</h2>
                 <div class="controls">
+                    <label>字段要求：包含“商品编号”、“通用名”、“批号”、“购进数量/销售数量”</label>
                     <input type="file" id="f1" accept=".xlsx, .xls">
-                    <button onclick="doCalc1()" class="btn-execute" id="b1_calc">执行核算</button>
+                    <button onclick="doCalc1()" class="btn-execute">执行核算</button>
                     <button onclick="doExport1()" class="btn-export" id="b1_exp" disabled>导出报表</button>
                 </div>
                 <div class="table-container">
@@ -73,10 +78,11 @@
 
         <div id="module2" class="module-section">
             <div class="card">
-                <h2>二级库存核算 (商业公司新)</h2>
+                <h2>二级库存核算 (基于：商业公司新)</h2>
                 <div class="controls">
+                    <label>字段要求：包含“商业公司新”、“产品名称”、“产品批号”、“购进数量/销售数量”</label>
                     <input type="file" id="f2" accept=".xlsx, .xls">
-                    <button onclick="doCalc2()" class="btn-execute" id="b2_calc">执行核算</button>
+                    <button onclick="doCalc2()" class="btn-execute">执行核算</button>
                     <button onclick="doExport2()" class="btn-export" id="b2_exp" disabled>导出报表</button>
                     <div class="summary-msg" id="msg2"></div>
                 </div>
@@ -88,17 +94,18 @@
 
         <div id="module3" class="module-section active">
             <div class="card">
-                <h2>二级流向分配 (商业公司 + 2/5倍数)</h2>
+                <h2>二级流向分配 (基于：商业公司 + 2/5倍数)</h2>
                 <div class="controls">
+                    <label>文件要求：Excel需包含“库存”和“客户”关键字的工作表</label>
                     <input type="file" id="f3" accept=".xlsx, .xls">
-                    <button onclick="doCalc3()" class="btn-execute" id="b3_calc">执行分配</button>
-                    <button onclick="doExport3()" class="btn-export" id="b3_exp" disabled>导出分配Excel</button>
-                    <div class="summary-msg" id="msg3">等待上传包含“库存”和“客户”表的Excel...</div>
+                    <button onclick="doCalc3()" class="btn-execute">执行分配</button>
+                    <button onclick="doExport3()" class="btn-export" id="b3_exp" disabled>导出完整Excel (含表1)</button>
+                    <div class="summary-msg" id="msg3">等待处理...</div>
                 </div>
                 <div class="inner-tabs">
-                    <button class="inner-tab active" onclick="tab(event, 'sub3_1', 'module3')">分配结果 (表3)</button>
-                    <button class="inner-tab" onclick="tab(event, 'sub3_2', 'module3')">原始库存 (表1)</button>
-                    <button class="inner-tab" onclick="tab(event, 'sub3_3', 'module3')">客户额度 (表2)</button>
+                    <button class="inner-tab active" onclick="tab(event, 'sub3_1')">分配结果 (表3)</button>
+                    <button class="inner-tab" onclick="tab(event, 'sub3_2')">原始库存 (表1)</button>
+                    <button class="inner-tab" onclick="tab(event, 'sub3_3')">客户额度 (表2)</button>
                 </div>
                 <div id="sub3_1" class="sub-3 table-container" style="display:block;">
                     <table><thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead><tbody id="t3_res"></tbody></table>
@@ -121,7 +128,7 @@
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
         }
-        function tab(e, id, mod) {
+        function tab(e, id) {
             document.querySelectorAll('.sub-3').forEach(c => c.style.display = 'none');
             e.currentTarget.parentNode.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(id).style.display = 'block';
@@ -134,7 +141,7 @@
         }
 
         // ==========================================
-        // 模块3：二级流向 (核心：商业公司)
+        // 模块3：二级流向 (核心逻辑)
         // ==========================================
         let f3_inv = [], f3_cli = [], f3_res = [];
         const today = new Date().toISOString().slice(0,10);
@@ -148,17 +155,16 @@
                 const s_inv = wb.Sheets[wb.SheetNames.find(n => n.includes('库存')) || wb.SheetNames[0]];
                 const s_cli = wb.Sheets[wb.SheetNames.find(n => n.includes('客户')) || wb.SheetNames[1]];
 
-                // 读取库存：商业公司(0), 产品(1), 批号(2), 数量(3), 生产(4), 有效(5), 单价(6)
+                // 表1库存：使用 [0]商业公司
                 f3_inv = XLSX.utils.sheet_to_json(s_inv, {header:1, raw:false}).slice(1)
                     .map(r => [r[0], r[1], r[2], Number(r[3])||0, fmtDate(r[4]), fmtDate(r[5]), Number(r[6])||0])
                     .filter(r => r[0] && r[3]>0);
 
-                // 读取客户：商业公司(0), 客户名称(1), 额度(2)
+                // 表2客户：使用 [0]商业公司
                 f3_cli = XLSX.utils.sheet_to_json(s_cli, {header:1, raw:false}).slice(1)
                     .map(r => [r[0], r[1], Number(r[2])||0])
                     .filter(r => r[0] && r[2]>0);
 
-                // 分配逻辑
                 f3_res = [];
                 const invGrp = {}; f3_inv.forEach(r => { if(!invGrp[r[0]]) invGrp[r[0]]=[]; invGrp[r[0]].push(r); });
                 const cliGrp = {}; f3_cli.forEach(r => { if(!cliGrp[r[0]]) cliGrp[r[0]]=[]; cliGrp[r[0]].push(r); });
@@ -183,7 +189,6 @@
                                 dist += final;
                             }
                         });
-                        // 补差给第一大客户
                         if(rem - dist > 0) {
                             let lastIdx = f3_res.findLastIndex(r => r[1] === co && r[4] === st[2]);
                             if(lastIdx > -1) { 
@@ -196,64 +201,67 @@
                     });
                 });
 
-                // 渲染
                 renderT('t3_inv', f3_inv);
                 renderT('t3_cli', f3_cli);
                 renderT('t3_res', f3_res);
                 document.getElementById('b3_exp').disabled = false;
-                document.getElementById('msg3').innerText = `分配成功！已处理商业公司 ${Object.keys(invGrp).length} 家，生成记录 ${f3_res.length} 条。`;
+                document.getElementById('msg3').innerText = `分配成功：生成记录 ${f3_res.length} 条。`;
             };
             reader.readAsArrayBuffer(file);
         }
 
+        // 修改导出函数：包含表3和原始表1
         function doExport3() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...f3_res]), "结果");
-            XLSX.writeFile(wb, `流向分配_${today}.xlsx`);
+            // Sheet 1: 分配结果
+            const ws_res = XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...f3_res]);
+            XLSX.utils.book_append_sheet(wb, ws_res, "分配结果(表3)");
+            
+            // Sheet 2: 原始库存
+            const ws_inv = XLSX.utils.aoa_to_sheet([['商业公司','产品名称','产品批号','库存总量','生产日期','有效期至','单价'], ...f3_inv]);
+            XLSX.utils.book_append_sheet(wb, ws_inv, "原始库存(表1)");
+
+            XLSX.writeFile(wb, `二级流向分配报表_${today}.xlsx`);
         }
 
         // ==========================================
-        // 模块2：二级库存 (核心：商业公司新 + 产品批号)
+        // 模块2：二级库存 (商业公司新)
         // ==========================================
-        let buy2Raw = [], sale2Raw = [], res2 = [];
+        let res2 = [];
         function doCalc2() {
             const file = document.getElementById('f2').files[0];
             if(!file) return alert("请上传文件");
             const reader = new FileReader();
             reader.onload = function(e) {
                 const wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
-                buy2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))] || wb.Sheets[0]);
-                sale2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))] || wb.Sheets[1]);
-                
+                const buy = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))] || wb.Sheets[0]);
+                const sale = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))] || wb.Sheets[1]);
                 const map = {};
                 const getB = (r) => r['产品批号'] || r['批号'] || '无';
                 
-                buy2Raw.forEach(r => {
+                buy.forEach(r => {
                     const k = `${r['商业公司新'] || '未知'}|${r['产品名称'] || '未知'}|${getB(r)}`;
-                    const q = Number(r['购进数量'] || r['销售数量'] || 0); // 购进表可能也叫销售数量
-                    map[k] = (map[k] || 0) + q;
+                    map[k] = (map[k] || 0) + (Number(r['购进数量'] || r['销售数量'] || 0));
                 });
-                sale2Raw.forEach(r => {
+                sale.forEach(r => {
                     const k = `${r['商业公司新'] || '未知'}|${r['产品名称'] || '未知'}|${getB(r)}`;
                     map[k] = (map[k] || 0) - (Number(r['销售数量']) || 0);
                 });
-
                 res2 = Object.keys(map).map(k => [...k.split('|'), map[k]]).filter(r => r[3] !== 0);
                 renderT('t2_body', res2);
                 document.getElementById('b2_exp').disabled = false;
-                document.getElementById('msg2').innerText = `核算完成：${res2.length} 个批号库存。`;
+                document.getElementById('msg2').innerText = `核算完成。`;
             };
             reader.readAsArrayBuffer(file);
         }
-
         function doExport2() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','产品批号','库存数量'], ...res2]), "结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','产品批号','库存数量'], ...res2]), "库存结果");
             XLSX.writeFile(wb, `二级库存核算_${today}.xlsx`);
         }
 
         // ==========================================
-        // 模块1：一级库存 (商业公司新)
+        // 模块1：一级库存 (商品编号)
         // ==========================================
         let res1 = [];
         function doCalc1() {
@@ -274,7 +282,7 @@
         }
         function doExport1() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商品编号','通用名','规格','批号','生产日期','有效期','库存'], ...res1]), "结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商品编号','通用名','规格','批号','生产日期','有效期','库存'], ...res1]), "库存");
             XLSX.writeFile(wb, `一级库存_${today}.xlsx`);
         }
 
