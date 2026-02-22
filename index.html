@@ -68,9 +68,9 @@
     <div class="main-content">
         <div id="module1" class="module-section">
             <div class="card">
-                <h2>一级库存核算 (购进数量 - 销售数量)</h2>
+                <h2>一级库存核算 (购进 - 销售)</h2>
                 <div class="controls">
-                    <label>上传Excel（需包含“购进”和“销售”工作表）：</label>
+                    <label>上传Excel（包含“购进”和“销售”表）：</label>
                     <input type="file" id="invLevel1File" accept=".xlsx, .xls">
                     <button id="calcInv1Btn" class="btn-execute" disabled>执行核算对账</button>
                     <button id="exportInv1Btn" class="btn-export" disabled>导出完整报表</button>
@@ -79,9 +79,9 @@
                 </div>
 
                 <div class="inner-tabs">
-                    <button class="inner-tab active" onclick="switchSubTab(event, 'inv1_res', 'module1')">库存表 (结果)</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'inv1_buy', 'module1')">购进原表明细</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'inv1_sale', 'module1')">销售原表明细</button>
+                    <button class="inner-tab active" onclick="switchSubTab(event, 'inv1_res', 'module1')">库存结果表</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv1_buy', 'module1')">购进明细</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv1_sale', 'module1')">销售明细</button>
                 </div>
 
                 <div id="inv1_res" class="table-container sub-tab-module1" style="display:block;">
@@ -109,7 +109,7 @@
             <div class="card">
                 <h2>二级库存核算 (商业公司维度)</h2>
                 <div class="controls">
-                    <label>上传Excel（需包含“购进”和“销售”工作表）：</label>
+                    <label>上传Excel（包含“购进”和“销售”表）：</label>
                     <input type="file" id="invLevel2File" accept=".xlsx, .xls">
                     <button id="calcInv2Btn" class="btn-execute" disabled>执行核算对账</button>
                     <button id="exportInv2Btn" class="btn-export" disabled>导出核算报表</button>
@@ -119,8 +119,8 @@
 
                 <div class="inner-tabs">
                     <button class="inner-tab active" onclick="switchSubTab(event, 'inv2_res', 'module2')">库存核算结果</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_buy', 'module2')">购进明细</button>
-                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_sale', 'module2')">销售明细</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_buy', 'module2')">原始购进明细</button>
+                    <button class="inner-tab" onclick="switchSubTab(event, 'inv2_sale', 'module2')">原始销售明细</button>
                 </div>
 
                 <div id="inv2_res" class="table-container sub-tab-module2" style="display:block;">
@@ -131,7 +131,7 @@
                 </div>
                 <div id="inv2_buy" class="table-container sub-tab-module2" style="display:none;">
                     <table>
-                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>销售数量</th></tr></thead>
+                        <thead><tr><th>商业公司新</th><th>产品名称</th><th>批号</th><th>购进数量</th></tr></thead>
                         <tbody id="inv2BuyBody"></tbody>
                     </table>
                 </div>
@@ -148,7 +148,7 @@
             <div class="card">
                 <h2>二级流向分配 (2/5倍数优化)</h2>
                 <div class="controls">
-                    <label>上传Excel（需包含“库存”和“客户”工作表）：</label>
+                    <label>上传Excel（包含“库存”和“客户”表）：</label>
                     <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
                     <button id="allocateBtn" class="btn-execute" disabled>执行流向分配</button>
                     <button id="exportBtn" class="btn-export" disabled>导出分配结果</button>
@@ -163,7 +163,7 @@
 
                 <div id="sub1" class="table-container sub-tab-module3" style="display:block;">
                     <table>
-                        <thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead>
+                        <thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期至</th><th>单价</th><th>金额</th></tr></thead>
                         <tbody id="allocationBody"></tbody>
                     </table>
                 </div>
@@ -184,7 +184,7 @@
     </div>
 
     <script>
-        // --- 导航与切换逻辑 ---
+        // --- 导航与工具函数 ---
         function switchModule(moduleId) {
             document.querySelectorAll('.module-section').forEach(m => m.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -199,7 +199,6 @@
             evt.currentTarget.classList.add('active');
         }
 
-        // --- 通用：Excel日期处理 ---
         function formatExcelDate(d) {
             if (!d) return "";
             if (typeof d === 'number') {
@@ -209,98 +208,83 @@
             return d;
         }
 
+        function renderTable(id, data, keys) {
+            const body = document.getElementById(id);
+            if (!keys) {
+                body.innerHTML = data.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+            } else {
+                body.innerHTML = data.map(r => `<tr>${keys.map(k => `<td>${r[k] || ''}</td>`).join('')}</tr>`).join('');
+            }
+        }
+
         // ==========================================
-        // 一级库存逻辑 (Module 1) - 新完善
+        // 一级库存逻辑 (全中文标题)
         // ==========================================
-        let inv1BuyData = [], inv1SaleData = [], inv1Calculated = [];
+        let buy1Raw = [], sale1Raw = [], inv1Calculated = [];
 
         document.getElementById('invLevel1File').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(event) {
-                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const buySheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('购进'))];
-                const saleSheet = workbook.Sheets[workbook.SheetNames.find(n => n.includes('销售'))];
-
-                if (!buySheet || !saleSheet) { alert("必须包含'购进'和'销售'工作表"); return; }
-
-                inv1BuyData = XLSX.utils.sheet_to_json(buySheet).map(r => ({
-                    id: r['商品编号'], name: r['通用名'], spec: r['规格'], 
-                    batch: r['批号'], dateP: formatExcelDate(r['生产日期']), 
-                    dateE: formatExcelDate(r['有效期至']), qty: Number(r['购进数量']) || 0
-                }));
-
-                inv1SaleData = XLSX.utils.sheet_to_json(saleSheet).map(r => ({
-                    id: r['商品编号'], name: r['通用名'], spec: r['规格'], 
-                    batch: r['批号'], dateP: formatExcelDate(r['生产日期']), 
-                    dateE: formatExcelDate(r['有效期至']), qty: Number(r['销售数量']) || 0
-                }));
-
-                renderTable('inv1BuyBody', inv1BuyData, ['id','name','spec','batch','dateP','dateE','qty']);
-                renderTable('inv1SaleBody', inv1SaleData, ['id','name','spec','batch','dateP','dateE','qty']);
+                const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                const bS = wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))];
+                const sS = wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))];
+                buy1Raw = XLSX.utils.sheet_to_json(bS);
+                sale1Raw = XLSX.utils.sheet_to_json(sS);
+                
+                const bDisp = buy1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: Number(r['购进数量']) || 0 }));
+                const sDisp = sale1Raw.map(r => ({ id: r['商品编号'], name: r['通用名'], spec: r['规格'], batch: r['批号'], dp: formatExcelDate(r['生产日期']), de: formatExcelDate(r['有效期至']), q: Number(r['销售数量']) || 0 }));
+                
+                renderTable('inv1BuyBody', bDisp, ['id','name','spec','batch','dp','de','q']);
+                renderTable('inv1SaleBody', sDisp, ['id','name','spec','batch','dp','de','q']);
                 document.getElementById('calcInv1Btn').disabled = false;
-                document.getElementById('inv1Summary').innerText = `已加载：购进${inv1BuyData.length}条，销售${inv1SaleData.length}条。`;
             };
             reader.readAsArrayBuffer(file);
         });
 
         document.getElementById('calcInv1Btn').onclick = function() {
             const map = {};
-            inv1BuyData.forEach(r => {
-                const key = `${r.id}|${r.name}|${r.spec}|${r.batch}|${r.dateP}|${r.dateE}`;
-                map[key] = (map[key] || 0) + r.qty;
+            buy1Raw.forEach(r => {
+                const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`;
+                map[k] = (map[k] || 0) + (Number(r['购进数量']) || 0);
             });
-            inv1SaleData.forEach(r => {
-                const key = `${r.id}|${r.name}|${r.spec}|${r.batch}|${r.dateP}|${r.dateE}`;
-                map[key] = (map[key] || 0) - r.qty;
+            sale1Raw.forEach(r => {
+                const k = `${r['商品编号']}|${r['通用名']}|${r['规格']}|${r['批号']}|${formatExcelDate(r['生产日期'])}|${formatExcelDate(r['有效期至'])}`;
+                map[k] = (map[k] || 0) - (Number(r['销售数量']) || 0);
             });
-
-            inv1Calculated = Object.keys(map).map(k => {
-                const parts = k.split('|');
-                return [...parts, map[k]];
-            }).filter(r => r[6] !== 0);
-
+            inv1Calculated = Object.keys(map).map(k => [...k.split('|'), map[k]]).filter(r => r[6] !== 0);
             renderTable('inv1ResBody', inv1Calculated);
-
-            // 验证
-            const buySum = inv1BuyData.reduce((s,r)=>s+r.qty,0);
-            const saleSum = inv1SaleData.reduce((s,r)=>s+r.qty,0);
-            const invSum = inv1Calculated.reduce((s,r)=>s+r[6],0);
-            const vDiv = document.getElementById('inv1Verify');
-            if(Math.abs((buySum - saleSum) - invSum) < 0.1) {
-                vDiv.innerHTML = `<strong>验证成功：</strong>购进(${buySum}) - 销售(${saleSum}) = 库存(${invSum})。记录共${inv1Calculated.length}条。`;
-                vDiv.className = "verify-msg verify-success";
-            } else {
-                vDiv.innerHTML = `<strong>验证失败：</strong>存在对账差额！请检查批号或商品编号是否统一。`;
-                vDiv.className = "verify-msg verify-error";
-            }
             document.getElementById('exportInv1Btn').disabled = false;
+            document.getElementById('inv1Verify').innerHTML = "一级库存核算完成。";
+            document.getElementById('inv1Verify').className = "verify-msg verify-success";
         };
 
         document.getElementById('exportInv1Btn').onclick = function() {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商品编号','通用名','规格','批号','生产日期','有效期至','库存数量'], ...inv1Calculated]), "库存结果");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inv1BuyData), "原始购进");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inv1SaleData), "原始销售");
-            XLSX.writeFile(wb, `一级库存核算_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buy1Raw), "原始购进明细");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sale1Raw), "原始销售明细");
+            XLSX.writeFile(wb, `一级库存报表_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         // ==========================================
-        // 二级库存逻辑 (Module 2)
+        // 二级库存逻辑 (包含原始数据导出)
         // ==========================================
-        let buy2Data = [], sale2Data = [], inv2Calculated = [];
+        let buy2Raw = [], sale2Raw = [], inv2Calculated = [];
+
         document.getElementById('invLevel2File').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = function(event) {
-                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const bS = workbook.Sheets[workbook.SheetNames.find(n => n.includes('购进'))];
-                const sS = workbook.Sheets[workbook.SheetNames.find(n => n.includes('销售'))];
-                buy2Data = XLSX.utils.sheet_to_json(bS).map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: Number(r['销售数量']) || 0 }));
-                sale2Data = XLSX.utils.sheet_to_json(sS).map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: Number(r['销售数量']) || 0 }));
-                renderTable('inv2BuyBody', buy2Data, ['co','p','b','q']);
-                renderTable('inv2SaleBody', sale2Data, ['co','p','b','q']);
+                const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                buy2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('购进'))]);
+                sale2Raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.find(n => n.includes('销售'))]);
+                
+                const bDisp = buy2Raw.map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: r['销售数量'] }));
+                const sDisp = sale2Raw.map(r => ({ co: r['商业公司新'], p: r['产品名称'], b: r['批号'], q: r['销售数量'] }));
+                
+                renderTable('inv2BuyBody', bDisp, ['co','p','b','q']);
+                renderTable('inv2SaleBody', sDisp, ['co','p','b','q']);
                 document.getElementById('calcInv2Btn').disabled = false;
             };
             reader.readAsArrayBuffer(file);
@@ -308,36 +292,37 @@
 
         document.getElementById('calcInv2Btn').onclick = function() {
             const m = {};
-            buy2Data.forEach(r => { const k=`${r.co}|${r.p}|${r.b}`; m[k] = (m[k]||0)+r.q; });
-            sale2Data.forEach(r => { const k=`${r.co}|${r.p}|${r.b}`; m[k] = (m[k]||0)-r.q; });
-            inv2Calculated = Object.keys(m).map(k => [...k.split('|'), m[k]]).filter(r => r[3]!==0);
+            buy2Raw.forEach(r => { const k=`${r['商业公司新']}|${r['产品名称']}|${r['批号']}`; m[k] = (m[k]||0) + (Number(r['销售数量'])||0); });
+            sale2Raw.forEach(r => { const k=`${r['商业公司新']}|${r['产品名称']}|${r['批号']}`; m[k] = (m[k]||0) - (Number(r['销售数量'])||0); });
+            inv2Calculated = Object.keys(m).map(k => [...k.split('|'), m[k]]).filter(r => r[3] !== 0);
             renderTable('inv2ResBody', inv2Calculated);
-            document.getElementById('inv2Verify').innerHTML = "二级对账完成";
-            document.getElementById('inv2Verify').className = "verify-msg verify-success";
             document.getElementById('exportInv2Btn').disabled = false;
         };
 
         document.getElementById('exportInv2Btn').onclick = function() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','批号','库存数量'], ...inv2Calculated]), "结果");
-            XLSX.writeFile(wb, `二级库存_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司新','产品名称','批号','库存数量'], ...inv2Calculated]), "库存核算结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buy2Raw), "原始购进明细");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sale2Raw), "原始销售明细");
+            XLSX.writeFile(wb, `二级库存报表_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         // ==========================================
-        // 二级流向逻辑 (Module 3) - 保持2/5倍数及分配逻辑
+        // 二级流向逻辑
         // ==========================================
-        let flowInv = [], flowCli = [], flowRes = [];
+        let flowInvRaw = [], flowCliRaw = [], flowRes = [];
+
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = function(event) {
-                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                const iS = workbook.Sheets[workbook.SheetNames.find(n => n.includes('库存'))];
-                const cS = workbook.Sheets[workbook.SheetNames.find(n => n.includes('客户'))];
-                flowInv = XLSX.utils.sheet_to_json(iS, {header:1}).slice(1).map(r => [r[0],r[1],r[2],Number(r[3])||0,formatExcelDate(r[4]),formatExcelDate(r[5]),Number(r[6])||0]);
-                flowCli = XLSX.utils.sheet_to_json(cS, {header:1}).slice(1).map(r => [r[0],r[1],Number(r[2])||0]);
-                renderTable('inventoryBody', flowInv);
-                renderTable('clientsBody', flowCli);
+                const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                const iS = wb.Sheets[wb.SheetNames.find(n => n.includes('库存'))];
+                const cS = wb.Sheets[wb.SheetNames.find(n => n.includes('客户'))];
+                flowInvRaw = XLSX.utils.sheet_to_json(iS, {header:1}).slice(1);
+                flowCliRaw = XLSX.utils.sheet_to_json(cS, {header:1}).slice(1);
+                renderTable('inventoryBody', flowInvRaw);
+                renderTable('clientsBody', flowCliRaw);
                 document.getElementById('allocateBtn').disabled = false;
             };
             reader.readAsArrayBuffer(file);
@@ -345,34 +330,34 @@
 
         document.getElementById('allocateBtn').onclick = function() {
             flowRes = [];
-            const coInv = {}; flowInv.forEach(r => { if(!coInv[r[0]]) coInv[r[0]]=[]; coInv[r[0]].push(r); });
-            const coCli = {}; flowCli.forEach(r => { if(!coCli[r[0]]) coCli[r[0]]=[]; coCli[r[0]].push(r); });
+            const coInv = {}; flowInvRaw.forEach(r => { if(!coInv[r[0]]) coInv[r[0]]=[]; coInv[r[0]].push(r); });
+            const coCli = {}; flowCliRaw.forEach(r => { if(!coCli[r[0]]) coCli[r[0]]=[]; coCli[r[0]].push(r); });
             const today = new Date().toISOString().slice(0,10);
 
             Object.keys(coInv).forEach(co => {
-                let stocks = coInv[co].sort((a,b)=>String(a[2]).localeCompare(String(b[2])));
+                let stocks = coInv[co];
                 let clients = (coCli[co]||[]).sort((a,b)=>b[2]-a[2]);
                 if(!clients.length) return;
-                const totalQ = clients.reduce((s,c)=>s+c[2],0);
+                const totalQ = clients.reduce((s,c)=>s+Number(c[2]),0);
 
                 stocks.forEach(st => {
-                    let remain = st[3], dist = 0;
+                    let rem = Number(st[3]), dist = 0;
                     clients.forEach(cl => {
-                        let ideal = st[3] * (cl[2]/totalQ), final = 0;
+                        let ideal = Number(st[3]) * (Number(cl[2])/totalQ), final = 0;
                         if(ideal >= 2) {
                             let q5 = Math.floor(ideal/5)*5, q2 = Math.floor(ideal/2)*2;
                             final = q5 > 0 ? q5 : (q2 >= 2 ? q2 : 0);
                         }
-                        final = Math.min(final, remain - dist);
+                        final = Math.min(final, rem - dist);
                         if(final > 0) {
-                            flowRes.push([today, co, cl[1], st[1], st[2], final, st[4], st[5], st[6], (final*st[6]).toFixed(2)]);
+                            flowRes.push([today, co, cl[1], st[1], st[2], final, formatExcelDate(st[4]), formatExcelDate(st[5]), st[6], (final*st[6]).toFixed(2)]);
                             dist += final;
                         }
                     });
-                    if(remain - dist > 0) {
+                    if(rem - dist > 0) {
                         let last = flowRes.findLastIndex(r=>r[1]===co && r[4]===st[2]);
-                        if(last>-1) { flowRes[last][5] += (remain-dist); flowRes[last][9] = (flowRes[last][5]*st[6]).toFixed(2); }
-                        else { flowRes.push([today, co, clients[0][1], st[1], st[2], remain-dist, st[4], st[5], st[6], ((remain-dist)*st[6]).toFixed(2)]); }
+                        if(last>-1) { flowRes[last][5] += (rem-dist); flowRes[last][9] = (flowRes[last][5]*st[6]).toFixed(2); }
+                        else { flowRes.push([today, co, clients[0][1], st[1], st[2], rem-dist, formatExcelDate(st[4]), formatExcelDate(st[5]), st[6], ((rem-dist)*st[6]).toFixed(2)]); }
                     }
                 });
             });
@@ -382,19 +367,9 @@
 
         document.getElementById('exportBtn').onclick = function() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...flowRes]), "分配结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期至','单价','金额'], ...flowRes]), "分配结果");
             XLSX.writeFile(wb, `二级流向分配_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
-
-        // --- 通用：表格渲染辅助 ---
-        function renderTable(id, data, keys) {
-            const body = document.getElementById(id);
-            if (!keys) {
-                body.innerHTML = data.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
-            } else {
-                body.innerHTML = data.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('');
-            }
-        }
     </script>
 </body>
 </html>
