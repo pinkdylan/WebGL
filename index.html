@@ -78,7 +78,7 @@
 
         <div id="module3" class="module-section active">
             <div class="card">
-                <h2>二级流向分配 (字段：商业公司)</h2>
+                <h2>二级流向分配 (日期月内随机+老批号优先)</h2>
                 <div class="controls">
                     <input type="file" id="f3" accept=".xlsx, .xls">
                     <button onclick="doCalc3()" class="btn-execute">执行分配</button>
@@ -90,7 +90,7 @@
                     <button class="inner-tab" onclick="tab(event, 'sub3_2')">原始库存 (表1)</button>
                 </div>
                 <div id="sub3_1" class="sub-3 table-container" style="display:block;">
-                    <table><thead><tr><th>日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead><tbody id="t3_res"></tbody></table>
+                    <table><thead><tr><th>分配日期</th><th>商业公司</th><th>客户名称</th><th>产品名称</th><th>产品批号</th><th>总量</th><th>生产日期</th><th>有效期</th><th>单价</th><th>金额</th></tr></thead><tbody id="t3_res"></tbody></table>
                 </div>
                 <div id="sub3_2" class="sub-3 table-container" style="display:none;">
                     <table><thead><tr><th>商业公司</th><th>产品名称</th><th>产品批号</th><th>库存总量</th><th>生产日期</th><th>有效期至</th><th>单价</th></tr></thead><tbody id="t3_inv"></tbody></table>
@@ -100,7 +100,7 @@
     </div>
 
     <script>
-        // --- 通用UI与日期处理 ---
+        // --- 核心辅助函数 ---
         function switchModule(id, btn) {
             document.querySelectorAll('.module-section').forEach(m => m.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -117,8 +117,20 @@
             return d;
         }
 
+        // 生成本月内随机日期函数
+        function getRandomDateInMonth() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const firstDay = 1;
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const randomDay = Math.floor(Math.random() * (lastDay - firstDay + 1)) + firstDay;
+            const resDate = new Date(year, month, randomDay);
+            return resDate.toISOString().slice(0, 10);
+        }
+
         // ==========================================
-        // 模块1 & 模块2：通用逻辑 (导出3个Sheet)
+        // 模块1 & 模块2：逻辑 (保持导出3个Sheet)
         // ==========================================
         let gBuyData1 = [], gSaleData1 = [], gResData1 = [];
         let gBuyData2 = [], gSaleData2 = [], gResData2 = [];
@@ -172,8 +184,8 @@
             reader.readAsArrayBuffer(document.getElementById('f2').files[0]);
         }
 
-        function doExport1() { exportTriSheet(gResData1, gBuyData1, gSaleData1, '一级库存核算', ['商品编号','通用名','规格','批号','生产日期','有效期','库存']); }
-        function doExport2() { exportTriSheet(gResData2, gBuyData2, gSaleData2, '二级库存核算', ['商业公司新','产品名称','产品批号','核算库存']); }
+        function doExport1() { exportTriSheet(gResData1, gBuyData1, gSaleData1, '一级库存', ['商品编号','通用名','规格','批号','生产日期','有效期','库存']); }
+        function doExport2() { exportTriSheet(gResData2, gBuyData2, gSaleData2, '二级库存', ['商业公司新','产品名称','产品批号','核算库存']); }
 
         function exportTriSheet(resArr, rawBuy, rawSale, name, head) {
             const wb = XLSX.utils.book_new();
@@ -184,7 +196,7 @@
         }
 
         // ==========================================
-        // 模块3：二级流向 (导出2个Sheet，字段：商业公司)
+        // 模块3：二级流向 (修改日期随机+批号排序)
         // ==========================================
         let f3_inv_raw = [], f3_res_final = [];
         function doCalc3() {
@@ -194,11 +206,18 @@
                 const s_inv = wb.Sheets[wb.SheetNames.find(n => n.includes('库存')) || wb.SheetNames[0]];
                 const s_cli = wb.Sheets[wb.SheetNames.find(n => n.includes('客户')) || wb.SheetNames[1]];
 
-                // 字段严格绑定：r[0] 为 商业公司
+                // 字段绑定：r[0] 商业公司
                 const invData = XLSX.utils.sheet_to_json(s_inv, {header:1, raw:false}).slice(1)
                     .map(r => [r[0], r[1], r[2], Number(r[3])||0, fmtDate(r[4]), fmtDate(r[5]), Number(r[6])||0])
                     .filter(r => r[0] && r[3]>0);
-                f3_inv_raw = invData; // 存一份用于导出表1
+
+                // --- 排序逻辑：同一产品，老日期优先 (根据生产日期 [4] 升序) ---
+                invData.sort((a, b) => {
+                    if (a[4] !== b[4]) return a[4].localeCompare(b[4]);
+                    return 0;
+                });
+
+                f3_inv_raw = invData;
 
                 const cliData = XLSX.utils.sheet_to_json(s_cli, {header:1, raw:false}).slice(1)
                     .map(r => [r[0], r[1], Number(r[2])||0])
@@ -224,28 +243,33 @@
                             }
                             final = Math.min(final, rem - dist);
                             if(final > 0) {
-                                res.push([fmtDate(new Date()), co, cl[1], st[1], st[2], final, st[4], st[5], st[6], (final*st[6]).toFixed(2)]);
+                                // 使用随机日期函数
+                                res.push([getRandomDateInMonth(), co, cl[1], st[1], st[2], final, st[4], st[5], st[6], (final*st[6]).toFixed(2)]);
                                 dist += final;
                             }
                         });
                         if(rem - dist > 0) {
                             let last = res.findLastIndex(r => r[1] === co && r[4] === st[2]);
-                            if(last > -1) { res[last][5] += (rem-dist); res[last][9] = (res[last][5]*st[6]).toFixed(2); }
-                            else { res.push([fmtDate(new Date()), co, clients[0][1], st[1], st[2], rem-dist, st[4], st[5], st[6], ((rem-dist)*st[6]).toFixed(2)]); }
+                            if(last > -1) { 
+                                res[last][5] += (rem-dist); 
+                                res[last][9] = (res[last][5]*st[6]).toFixed(2); 
+                            } else {
+                                res.push([getRandomDateInMonth(), co, clients[0][1], st[1], st[2], rem-dist, st[4], st[5], st[6], ((rem-dist)*st[6]).toFixed(2)]);
+                            }
                         }
                     });
                 });
                 f3_res_final = res;
                 renderT('t3_inv', invData); renderT('t3_res', res);
                 document.getElementById('b3_exp').disabled = false;
-                document.getElementById('msg3').innerText = `分配成功：共生成 ${res.length} 条记录。`;
+                document.getElementById('msg3').innerText = `分配成功：共生成 ${res.length} 条流向记录。`;
             };
             reader.readAsArrayBuffer(document.getElementById('f3').files[0]);
         }
 
         function doExport3() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...f3_res_final]), "分配结果");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['分配日期','商业公司','客户名称','产品名称','产品批号','总量','生产日期','有效期','单价','金额'], ...f3_res_final]), "分配结果");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['商业公司','产品名称','产品批号','库存总量','生产日期','有效期至','单价'], ...f3_inv_raw]), "原始库存(表1)");
             XLSX.writeFile(wb, `二级流向分配报表_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
